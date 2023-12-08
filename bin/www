@@ -8,8 +8,8 @@ const path = require('path');
 const express = require('express');
 const http = require('http');
 const cookieParser = require('cookie-parser');
-const logger = require('morgan');
 const createError = require('http-errors');
+const logger = require('morgan');
 const bodyParser = require('body-parser');
 const argv = require('minimist')(process.argv.slice(2));  // load command arguments like --port 8080
 require('dotenv').config();
@@ -41,9 +41,9 @@ app.use(bodyParser.json());
 // basic routes
 app.use(
   '/api',
-  require(path.join(rootDirectory, 'src/routes/apiRoutes')),
-  require('../src/middleware/notFound')
+  require(path.join(rootDirectory, 'src/routes/apiRoutes'))
 );
+
 app.use( require(path.join(rootDirectory, 'src/routes/webRoutes')));
 
 // catch 404 and forward to error handler
@@ -54,13 +54,19 @@ app.use(function(req, res, next) {
 // Your error handling middleware
 app.use(function(err, req, res, next) {
   // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.status = err.status;
-  res.locals.error = process.env.APP_ENV === 'production' ? '' : err.stack;
+  console.log(err);
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+  const acceptHeader = req.get('Accept');
+  if (acceptHeader && acceptHeader.includes('application/json')) {
+    res.status(404).json({ error: err.message });
+  } else {
+    res.locals.message = err.message;
+    res.locals.status = err.status;
+    res.locals.error = process.env.APP_ENV === 'production' ? '' : err.stack;
+    // render the error page
+    res.status(err.status || 500);
+    res.render('error');
+  }
 });
 
 /**

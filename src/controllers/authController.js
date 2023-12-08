@@ -5,8 +5,30 @@ const { validationResult } = require('express-validator');
 const User = require('../models/User');
 
 const generateToken = (userId) => {
-  const token = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '1h' });
-  return { userId, token }; // Include user in the response
+  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '1h' });
+};
+
+const proceedForLogin = (req, res, user) => {
+  const userId = user._id;
+  const acceptHeader = req.get('Accept');
+  
+  // Check if the client accepts JSON
+  if (acceptHeader && acceptHeader.includes('application/json')) {
+    const token = generateToken(userId);
+    res.status(200).json({ userId, token });
+  } else {
+    // Set the session expiration based on the "Remember Me" option
+    if(req.body.remember){
+      req.session.cookie.maxAge = (30 * 24 * 60 * 60 * 1000); // 30 days for "Remember Me"
+    }
+    // Set session variables
+    req.session.user = user;
+
+    // Redirect to the originally requested URL or the default '/' if not set
+    const returnTo = req.session.returnTo || '/dashboard';
+    delete req.session.returnTo;
+    res.redirect(returnTo);
+  }
 };
 
 exports.register = async (req, res) => {
@@ -36,10 +58,8 @@ exports.register = async (req, res) => {
       throw new Error('Unable to create user');
     }
     
-    // Generate a JSON Web Token (JWT) for authentication
-    const tokenResponse = generateToken(user._id);
-
-    res.status(200).json(tokenResponse);
+    // Proceed for login
+    proceedForLogin(req, res, user);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -72,10 +92,8 @@ exports.login = async (req, res) => {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
     
-    // Generate a JSON Web Token (JWT) for authentication
-    const tokenResponse = generateToken(user._id);
-    
-    res.status(200).json(tokenResponse);
+    // Proceed for login
+    proceedForLogin(req, res, user);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
