@@ -1,0 +1,146 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+const rootDirectory = process.cwd();
+const path = require('path');
+const express = require('express');
+const http = require('http');
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
+const createError = require('http-errors');
+const bodyParser = require('body-parser');
+const argv = require('minimist')(process.argv.slice(2));  // load command arguments like --port 8080
+require('dotenv').config();
+
+require('@babel/register')({
+  presets: ['@babel/preset-env'],
+});
+
+// Set DEBUG environment variable if APP_DEBUG is true
+if (process.env.APP_DEBUG === 'true') {
+  process.env.DEBUG = 'expressapp:*';
+}
+
+const app = require(path.join(rootDirectory, 'app'));
+
+// view engine setup
+app.set('views', path.join(rootDirectory, 'src/views'));
+app.set('view engine', 'ejs');
+
+app.use(logger('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+app.use(express.static(path.join(rootDirectory, 'public')));
+
+// Middleware
+app.use(bodyParser.json());
+
+// basic routes
+app.use(
+  '/api',
+  require(path.join(rootDirectory, 'src/routes/apiRoutes')),
+  require('../src/middleware/notFound')
+);
+app.use( require(path.join(rootDirectory, 'src/routes/webRoutes')));
+
+// catch 404 and forward to error handler
+app.use(function(req, res, next) {
+  next(createError(404));
+});
+
+// Your error handling middleware
+app.use(function(err, req, res, next) {
+  // set locals, only providing error in development
+  res.locals.message = err.message;
+  res.locals.status = err.status;
+  res.locals.error = process.env.APP_ENV === 'production' ? '' : err.stack;
+
+  // render the error page
+  res.status(err.status || 500);
+  res.render('error');
+});
+
+/**
+ * Get port from environment and store in Express.
+ */
+var port = normalizePort(argv.PORT || process.env.APP_PORT || '3000');
+app.set('port', port);
+
+/**
+ * Create HTTP server.
+ */
+var server = http.createServer(app);
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  console.log(`Server is running on ${bind}`);
+  console.log('');
+
+  // const listEndpoints = require('express-list-endpoints');
+  // console.log(listEndpoints(app));
+}
