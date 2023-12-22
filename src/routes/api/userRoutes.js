@@ -1,12 +1,11 @@
-const rootDirectory = process.cwd();
 const path = require('path');
 
 const express = require('express');
 const { param, body } = require('express-validator');
 const router = express.Router();
-const verifyToken = require(path.join(rootDirectory, 'src/middleware/verifyToken'));
-const verifyRole = require(path.join(rootDirectory, 'src/middleware/verifyRole'));
-const userController = require(path.join(rootDirectory, 'src/controllers/api/userController'));
+const verifyToken = require(path.join(global.rootDirectory, 'src/middleware/verifyToken'));
+const verifyRole = require(path.join(global.rootDirectory, 'src/middleware/verifyRole'));
+const userController = require(path.join(global.rootDirectory, 'src/controllers/api/userController'));
 
 // Middleware to check for 'superadmin' or 'admin' role
 const verifySuperAdminOrAdmin = verifyRole(['superadmin', 'admin']);

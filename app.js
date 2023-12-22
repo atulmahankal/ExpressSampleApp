@@ -1,6 +1,7 @@
 const express = require('express');
-const app = express();
+const path = require('path');
 const engine = require('ejs-blocks');
+const app = express();
 
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
@@ -14,7 +15,7 @@ app.engine('ejs', engine);
 })();
 
 // Parse SESSION_LIFETIME_MINUTES from .env as an integer and convert to milliseconds
-const sessionLifetimeMinutes = parseInt(process.env.SESSION_LIFETIME_MINUTES, 10);
+const sessionLifetimeMinutes = parseInt(process.env.SESSION_LIFETIME_MINUTES ?? 30, 10);
 const sessionLifetimeMilliseconds = sessionLifetimeMinutes * 60 * 1000;
 
 // Set up session

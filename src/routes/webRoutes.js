@@ -1,9 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const rootDirectory = process.cwd();
 const path = require('path');
 
-const verifySession = require(path.join(rootDirectory, 'src/middleware/verifySession'));
+const verifySession = require(path.join(global.rootDirectory, 'src/middleware/verifySession'));
 
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });

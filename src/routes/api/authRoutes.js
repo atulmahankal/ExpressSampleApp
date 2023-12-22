@@ -1,11 +1,10 @@
-const rootDirectory = process.cwd();
 const path = require('path');
 
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
 
-const authController = require(path.join(rootDirectory, 'src/controllers/authController'));
+const authController = require(path.join(global.rootDirectory, 'src/controllers/authController'));
 
 router.post(
   '/register',
